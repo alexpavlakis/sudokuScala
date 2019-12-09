@@ -123,17 +123,14 @@ object Sudoku {
 	// Function to solve with backtracking
 	def solveBacktracking (sdf:Array[Array[Int]]) : Boolean = {
 		
-		var index:Int = 99
-		var i:Int = 0
-		while(index == 99) {
-			if(sdf(i)(0) == 0) {
-				index = i
-			}
-			i += 1
+		var emptyElements = ListBuffer[Int]()
+		for(i <- 0.to(80) if sdf(i)(0) == 0) {
+			emptyElements += i
 		}
-		if(index == 99) {
-			return true 
+		if(emptyElements.size == 0) {
+			return true
 		}
+		var index:Int = emptyElements(0)
 
 	    var cantBes = cantBesGetter(sdf, sdf(index)(1), sdf(index)(2), sdf(index)(3))
 	    var options = (1.to(9)).toList.diff(cantBes)
