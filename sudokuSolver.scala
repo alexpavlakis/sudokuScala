@@ -22,10 +22,12 @@ object Sudoku {
 	// Function to return list of numbers already in a given dimension (1=row, 2=col, 3=box)
 	def inDim (sdf:Array[Array[Int]], dim:Int, value:Int) : ListBuffer[Int] = {
 		var nums = ListBuffer[Int]()
-		for(i <- 0.to(80)) {
+		var i:Int = 0
+		while(i <= 80) {
 			if(sdf(i)(dim) == value & sdf(i)(0) != 0) {
 				nums += sdf(i)(0)
 			} 
+			i += 1
 		}
 		return nums;
 	}
@@ -35,7 +37,6 @@ object Sudoku {
 		var inrow = inDim(sdf, 1, row)
 		var incol = inDim(sdf, 2, col)
 		var inbox = inDim(sdf, 3, box)
-	    
 	    return (inrow ++ incol ++ inbox).distinct
 	}
 
@@ -97,7 +98,7 @@ object Sudoku {
 
 	// Function to solve with pure sudoku logic
 	def solveLogic (sdf:Array[Array[Int]]) : Array[Array[Int]] = {
-		var blanksStart  = numEmpties(sdf)
+		var blanksStart = numEmpties(sdf)
 		if(blanksStart == 0) {
 			return sdf
 		}
@@ -122,18 +123,18 @@ object Sudoku {
 	// Function to solve with backtracking
 	def solveBacktracking (sdf:Array[Array[Int]]) : Boolean = {
 		
-		var emptyElements = ListBuffer[Int]()
-		for(i <- 0.to(80)) {
+		var index:Int = 99
+		var i:Int = 0
+		while(index == 99) {
 			if(sdf(i)(0) == 0) {
-				emptyElements += i
+				index = i
 			}
+			i += 1
 		}
-
-		if(emptyElements.size == 0) {
+		if(index == 99) {
 			return true 
 		}
 
-	    var index = emptyElements(0)
 	    var cantBes = cantBesGetter(sdf, sdf(index)(1), sdf(index)(2), sdf(index)(3))
 	    var options = (1.to(9)).toList.diff(cantBes)
 	    for(i <- options) {
@@ -226,7 +227,7 @@ object Sudoku {
 	    return result
 	}
 
-	// Solves in about half a second on macbook air (10X the time of cpp version)
+	// Solves in about a tenth of a second on macbook air (2X the time of cpp version)
 	def main(args:Array[String]) : Unit = {
 		printSudoku(sudoku)
 		print("\n")
