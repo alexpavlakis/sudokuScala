@@ -2,6 +2,7 @@
 // with 0 for unknown elements.  The program first tries to solve the
 // puzzle with sudoku logic.  If that fails, it employs a backtracking
 // algorithm to find a solution (if one exists)
+import scala.collection.mutable.ListBuffer
 
 object Sudoku {
 
@@ -19,7 +20,6 @@ object Sudoku {
 	}
 
 	// Function to return list of numbers already in a given dimension (1=row, 2=col, 3=box)
-	import scala.collection.mutable.ListBuffer
 	def inDim (sdf:Array[Array[Int]], dim:Int, value:Int) : ListBuffer[Int] = {
 		var nums = ListBuffer[Int]()
 		for(i <- 0.to(80)) {
@@ -63,7 +63,7 @@ object Sudoku {
 		return sdf
 	}
 
-	// Function to populate an element if everything else in its dimension cant be a given number
+	// Function to populate an element if everything else in its dimension can't be a given number
 	def populateExclusive (sdf:Array[Array[Int]], element:Int, dim:Int) : Array[Array[Int]] = {
 
 		// Get all numbers that can't be elsewhere in the dimension
@@ -147,19 +147,8 @@ object Sudoku {
 	    return false
 	}
 
-	// Full solver.  First try logic, then backtracking
-	def solveSudoku (sdf:Array[Array[Int]]) : Array[Array[Int]] = {
-		solveLogic(sdf:Array[Array[Int]])
-		if(numEmpties(sdf) != 0) {
-			solveBacktracking(sdf)
-		}
-		printSudoku(sdf)
-		return sdf
-	}
-
 	// Function to print sudoku array in somewhat readable fashion
 	def printSudoku (sdf:Array[Array[Int]]) = {
-
 		for(i <- 1.to(9)) {
 			var subSdf = filterDim(sdf, 1, i)
 			for(j <- 0.to(8)) {
@@ -169,13 +158,15 @@ object Sudoku {
 		}
 	}
 
-	// Function to time a function (for benchmarking)
-	def time[R](block: => R): R = {
-	    val t0 = System.nanoTime()
-	    val result = block    // call-by-name
-	    val t1 = System.nanoTime()
-	    println("Elapsed time: " + (t1 - t0) + "ns")
-	    result
+
+	// Full solver.  First try logic, then backtracking
+	def solveSudoku (sdf:Array[Array[Int]]) : Array[Array[Int]] = {
+		solveLogic(sdf:Array[Array[Int]])
+		if(numEmpties(sdf) != 0) {
+			solveBacktracking(sdf)
+		}
+		printSudoku(sdf)
+		return sdf
 	}
 
 
@@ -204,39 +195,43 @@ object Sudoku {
 					3, 3, 3, 6, 6, 6, 9, 9, 9, 
 					3, 3, 3, 6, 6, 6, 9, 9, 9)
 
-	// Hard Sudoku values
-	var vals = List(8, 0, 0, 0, 0, 0, 2, 0, 0, 
-					7, 0, 0, 0, 8, 0, 0, 5, 9, 
-					0, 0, 0, 9, 0, 2, 0, 0, 6, 
-					5, 0, 0, 0, 7, 0, 0, 1, 0, 
-					0, 0, 4, 0, 0, 8, 0, 0, 0, 
-					0, 8, 0, 0, 0, 6, 0, 0, 0, 
-					0, 0, 0, 0, 0, 0, 0, 2, 0, 
-					0, 0, 0, 0, 1, 0, 0, 3, 0, 
-					3, 7, 0, 0, 6, 0, 0, 0, 0)
 
-	// Create Board
-	var hardSudoku = Array.ofDim[Int](81, 4)
+
+	// Sudoku values
+	var vals = List(2, 4, 0, 0, 8, 0, 5, 0, 0, 
+					1, 0, 6, 0, 0, 5, 0, 2, 0, 
+					0, 8, 5, 2, 7, 0, 0, 0, 0, 
+					0, 0, 0, 5, 0, 2, 0, 7, 0, 
+					0, 0, 2, 0, 0, 0, 1, 0, 0, 
+					0, 1, 0, 3, 0, 4, 0, 0, 0, 
+					0, 0, 0, 0, 5, 7, 4, 6, 0, 
+					0, 2, 0, 9, 0, 0, 7, 0, 8, 
+					0, 0, 4, 0, 2, 0, 0, 1, 9)
+
+	var sudoku = Array.ofDim[Int](81, 4)
 	for(i <- 0.to(80)) {
-	  hardSudoku(i)(0) = vals(i)
-	  hardSudoku(i)(1) = rows(i)
-	  hardSudoku(i)(2) = cols(i)
-	  hardSudoku(i)(3) = boxs(i)
+	  sudoku(i)(0) = vals(i)
+	  sudoku(i)(1) = rows(i)
+	  sudoku(i)(2) = cols(i)
+	  sudoku(i)(3) = boxs(i)
 	}
+
 
 	// Time a Function
 	def time[R](block: => R): R = {
 	    val t0 = System.nanoTime()
-	    val result = block    // call-by-name
+	    val result = block    
 	    val t1 = System.nanoTime()
 	    println("Elapsed time: " + (t1 - t0)/1e+9 + " seconds")
-	    result
+	    return result
 	}
 
 	// Solves in about half a second on macbook air (10X the time of cpp version)
 	def main(args:Array[String]) : Unit = {
+		printSudoku(sudoku)
+		print("\n")
 		time {
-			solveSudoku(hardSudoku)
+			solveSudoku(sudoku)
 		}
 	}
 
