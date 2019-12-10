@@ -6,6 +6,9 @@ import scala.collection.mutable.ListBuffer
 
 object Sudoku {
 
+	// Possibilities for a sudoku
+	val nums = List(1, 2, 3, 4, 5, 6, 7, 8, 9)
+
 	// Function to subset a sudoku (sdf) by a dimension (1=row, 2=col, 3=box) and value
 	def filterDim (sdf:Array[Array[Int]], dim:Int, value:Int) : Array[Array[Int]] = {
 		var out = Array.ofDim[Int](9, 4)
@@ -21,15 +24,15 @@ object Sudoku {
 
 	// Function to return list of numbers already in a given dimension (1=row, 2=col, 3=box)
 	def inDim (sdf:Array[Array[Int]], dim:Int, value:Int) : ListBuffer[Int] = {
-		var nums = ListBuffer[Int]()
+		var inAlready = ListBuffer[Int]()
 		var i:Int = 0
 		while(i <= 80) {
 			if(sdf(i)(dim) == value & sdf(i)(0) != 0) {
-				nums += sdf(i)(0)
+				inAlready += sdf(i)(0)
 			} 
 			i += 1
 		}
-		return nums;
+		return inAlready;
 	}
 
 	// Function to return a List of what an element can't be
@@ -57,7 +60,7 @@ object Sudoku {
 			if(sdf(i)(0) == 0) {
 				var cantbes = cantBesGetter(sdf, sdf(i)(1), sdf(i)(2), sdf(i)(3))
 				if(cantbes.size == 8) {
-					sdf(i)(0) = (1.to(9)).diff(cantbes)(0)
+					sdf(i)(0) = nums.diff(cantbes)(0)
 				}
 			}
 		}
@@ -68,28 +71,29 @@ object Sudoku {
 	def populateExclusive (sdf:Array[Array[Int]], element:Int, dim:Int) : Array[Array[Int]] = {
 
 		// Get all numbers that can't be elsewhere in the dimension
-		if(sdf(element)(0) == 0) {
-			var value = sdf(element)(dim)
-		    var inAlready = inDim(sdf, dim, value)
-			var out = ListBuffer[Int]()
-			for(i <- 0.to(80)) {
-				if(sdf(i)(dim) == value & sdf(i)(0) == 0 & i != element) {
-					var cantBes = cantBesGetter(sdf, sdf(i)(1), sdf(i)(2), sdf(i)(3))
-					cantBes = cantBes.diff(inAlready)
-					for(j <- 0.to(cantBes.size - 1)) {
-						out += cantBes(j)
-					}
+		var value = sdf(element)(dim)
+		var inAlready = inDim(sdf, dim, value)
+		if(inAlready.size == 8) {
+			sdf(element)(0) = nums.diff(inAlready)(0)
+		}
+		var out = ListBuffer[Int]()
+		for(i <- 0.to(80)) {
+			if(sdf(i)(dim) == value & sdf(i)(0) == 0 & i != element) {
+				var cantBes = cantBesGetter(sdf, sdf(i)(1), sdf(i)(2), sdf(i)(3))
+				cantBes = cantBes.diff(inAlready)
+				for(j <- 0.to(cantBes.size - 1)) {
+					out += cantBes(j)
 				}
 			}
+		}
 
-			// If there's one number that can't be in any of the other open slots,
-			// populate this element with it.
-			if(out.size > 0) {
-				var mapped = out.groupBy(identity).mapValues(_.size)
-				for(j <- out.distinct) {
-					if(mapped(j) == (8 - inAlready.size)) {
-						sdf(element)(0) = j
-					}
+		// If there's one number that can't be in any of the other open slots,
+		// populate this element with it.
+		if(out.size > 0) {
+			var mapped = out.groupBy(identity).mapValues(_.size)
+			for(j <- out.distinct) {
+				if(mapped(j) == (8 - inAlready.size)) {
+					sdf(element)(0) = j
 				}
 			}
 		}
@@ -121,25 +125,21 @@ object Sudoku {
 	}
 
 	// Function to solve with backtracking
-	def solveBacktracking (sdf:Array[Array[Int]]) : Boolean = {
+	def solveBacktracking (sdf:Array[Array[Int]], emptyElements:ListBuffer[Int]) : Boolean = {
 		
-		var emptyElements = ListBuffer[Int]()
-		for(i <- 0.to(80) if sdf(i)(0) == 0) {
-			emptyElements += i
-		}
 		if(emptyElements.size == 0) {
 			return true
 		}
-		var index:Int = emptyElements(0)
 
-	    var cantBes = cantBesGetter(sdf, sdf(index)(1), sdf(index)(2), sdf(index)(3))
-	    var options = (1.to(9)).toList.diff(cantBes)
+		var subSdf = sdf(emptyElements(0))
+	    var cantBes = cantBesGetter(sdf, subSdf(1), subSdf(2), subSdf(3))
+	    var options = nums.toList.diff(cantBes)
 	    for(i <- options) {
-	    	sdf(index)(0) = i
-	    	if(solveBacktracking(sdf)) {
+	    	sdf(emptyElements(0))(0) = i
+	    	if(solveBacktracking(sdf, emptyElements.slice(1, emptyElements.size))) {
 	    		return true
 	    	} else {
-	    		sdf(index)(0) = 0
+	    		sdf(emptyElements(0))(0) = 0
 	    	} 
 	    }
 	    return false
@@ -147,7 +147,7 @@ object Sudoku {
 
 	// Function to print sudoku array in somewhat readable fashion
 	def printSudoku (sdf:Array[Array[Int]]) = {
-		for(i <- 1.to(9)) {
+		for(i <- nums) {
 			var subSdf = filterDim(sdf, 1, i)
 			for(j <- 0.to(8)) {
 				print(subSdf(j)(0) + " ")
@@ -161,7 +161,11 @@ object Sudoku {
 	def solveSudoku (sdf:Array[Array[Int]]) : Array[Array[Int]] = {
 		solveLogic(sdf:Array[Array[Int]])
 		if(numEmpties(sdf) != 0) {
-			solveBacktracking(sdf)
+			var emptyElements = ListBuffer[Int]()
+			for(i <- 0.to(80) if sdf(i)(0) == 0) {
+				emptyElements += i
+			}
+			solveBacktracking(sdf, emptyElements)
 		}
 		printSudoku(sdf)
 		return sdf
@@ -234,3 +238,6 @@ object Sudoku {
 	}
 
 }
+
+
+
