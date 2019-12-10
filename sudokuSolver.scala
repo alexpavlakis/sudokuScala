@@ -228,7 +228,7 @@ object Sudoku {
 	    return result
 	}
 
-	// Solves in about a tenth of a second on macbook air (2X the time of cpp version)
+	// Solves in about 1/100th of a second on macbook air (2X the time of cpp version)
 	def main(args:Array[String]) : Unit = {
 		printSudoku(sudoku)
 		print("\n")
