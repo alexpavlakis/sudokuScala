@@ -157,50 +157,58 @@ object Sudoku {
 
 
 	// Function to solve a puzzle by backtracking
-	def solveBacktracking(sudoku:ListBuffer[Int], empties:ListBuffer[Int], candidates:ListBuffer[ListBuffer[Int]]): Boolean = {
-		
-		if(empties.length == 0) return true 
+def solveBacktracking(sudoku:ListBuffer[Int], empties:ListBuffer[Int], candidates:ListBuffer[ListBuffer[Int]]): Boolean = {
+	
+	if(empties.length == 0) return true 
 
-		var index = empties(0)
-		var clen = candidates(index).length 
-		if(clen > 1) {
-			var i = 0
-			while(i < empties.length && clen > 1) {
-				if(candidates(empties(i)).length < clen) {
-					clen = candidates(empties(i)).length
-					index = empties(i)
-				}
-				i += 1
+	var index = empties(0)
+	var clen = candidates(index).length 
+	if(clen > 1) {
+		var i = 0
+		while(i < empties.length && clen > 1) {
+			if(candidates(empties(i)).length < clen) {
+				clen = candidates(empties(i)).length
+				index = empties(i)
 			}
+			i += 1
 		}
+	}
 
-		var options = candidates(index)
-		for(o <- options) {
-			var to_update = ListBuffer[Int]()
-			var j = 0
-			while(j < 20) {
-				var p = peers(index)(j)
-				if(candidates(p).length > 1) {
-					if(candidates(p).contains(o)) {
+	var options = candidates(index)
+	for(o <- options) {
+		var to_update = ListBuffer[Int]()
+		var legal = true
+		var j = 0
+		while(j < 20 && legal) {
+			var p = peers(index)(j)
+			if(sudoku(p) == 0) {
+				if(candidates(p).contains(o)) {
+					if(candidates(p).length == 1) {
+						legal = false
+					}
+					if(legal) {
 						candidates(p) -= o
 						to_update += p
 					}
 				}
-				j += 1
-			} 
+			}
+			j += 1
+		} 
 
+		if(legal) {
 			sudoku(index) = o
 			empties -= index
 			if(solveBacktracking(sudoku, empties, candidates)) return true
 			sudoku(index) = 0
 			empties += index 
-
-			for(p <- to_update) {
-				candidates(p) += o
-			}
 		}
-		return false
+
+		for(p <- to_update) {
+			candidates(p) += o
+		}
 	}
+	return false
+}
 
 	// Full sudoku solver
 	def solveSudoku(sudoku:ListBuffer[Int]): ListBuffer[Int] = { 
